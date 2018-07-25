@@ -38,7 +38,8 @@ object IrisTrainer {
       "objective" -> "multi:softprob",
       "num_class" -> 3,
       "num_round" -> 100,
-      "nWorkers" -> 2)
+      "num_workers" -> 2,
+      "timeout_request_workers" -> 60000L)
     val xgbClassifier = new XGBoostClassifier(xgbParam).
       setFeaturesCol("features").
       setLabelCol("classIndex")
