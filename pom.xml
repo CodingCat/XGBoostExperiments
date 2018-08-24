@@ -16,7 +16,7 @@
         </repository>
     </repositories>
     <modules>
-        <!-- <module>xgboost-0.72</module>-->
-        <module>xgboost-0.80</module>
+        <module>xgboost_exp_0.72</module>
+        <module>xgboost_exp_0.80</module>
     </modules>
 </project>

@@ -39,7 +39,6 @@ object IrisTrainer {
       "num_class" -> 3,
       "num_round" -> 100,
       "num_workers" -> 2,
-      "timeout_request_workers" -> 60000L,
       "checkpoint_path" -> "/Users/nanzhu/code/XGBoostExperiments/checkpoints",
       "checkpoint_interval" -> 2)
     val xgbClassifier = new XGBoostClassifier(xgbParam).
