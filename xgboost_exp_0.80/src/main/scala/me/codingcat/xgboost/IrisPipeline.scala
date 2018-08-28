@@ -1,6 +1,6 @@
 package me.codingcat.xgboost
 
-import ml.dmlc.xgboost4j.scala.spark.XGBoostEstimator
+import ml.dmlc.xgboost4j.scala.spark.XGBoostClassifier
 
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
@@ -8,6 +8,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 
 object IrisPipeline {
+
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder().getOrCreate()
@@ -34,14 +35,12 @@ object IrisPipeline {
       "num_class" -> 3,
       "num_round" -> 100,
       "num_workers" -> 2)
-    val xgbEstimator = new XGBoostEstimator(xgbParam)
-    xgbEstimator.setFeaturesCol("features")
-    xgbEstimator.setLabelCol("classIndex")
+    val xgboostClassifier = new XGBoostClassifier(xgbParam)
+    xgboostClassifier.setFeaturesCol("features")
+    xgboostClassifier.setLabelCol("classIndex")
 
-    val pipeline = new Pipeline()
-    pipeline.setStages(Array(stringIndexer, vectorAssembler, xgbEstimator))
+    val pipeline = new Pipeline().setStages(Array(stringIndexer, vectorAssembler, xgboostClassifier))
     val pipelineModel = pipeline.fit(rawInput)
-    pipelineModel.transform(rawInput).show()
     pipelineModel.stages.foreach(stage => println(stage.uid))
     pipelineModel.write.overwrite().save(args(1))
   }
