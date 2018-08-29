@@ -3,3 +3,4 @@
 *.jar
 .swp
 target
+pipeline_model_out*

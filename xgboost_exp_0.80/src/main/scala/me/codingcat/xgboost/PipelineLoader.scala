@@ -4,8 +4,10 @@ import ml.dmlc.xgboost4j.scala.XGBoost
 import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostClassificationModelBridge, XGBoostRegressionModel, XGBoostRegressionModelBridge}
 import org.apache.hadoop.fs.{FSDataInputStream, FileStatus, FileSystem, Path}
 
+import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.ml.{DefaultParamReaderBridge, Pipeline, PipelineModel, PipelineStage}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 
 object PipelineLoader {
 
@@ -22,7 +24,8 @@ object PipelineLoader {
     // skip modelType
     dataInStream.readUTF()
     val (featureCol, _, predictionCol) = loadGeneralModelParams(dataInStream)
-    val regressionModel = new XGBoostRegressionModelBridge(uid, XGBoost.loadModel(dataInStream)).
+    val regressionModel = new XGBoostRegressionModelBridge(Identifiable.randomUID("xgbr"),
+      XGBoost.loadModel(dataInStream)).
       xgbRegressionModel
     regressionModel.setFeaturesCol(featureCol)
     regressionModel.setPredictionCol(predictionCol)
@@ -45,18 +48,33 @@ object PipelineLoader {
         thresholds(i) = dataInStream.readDouble()
       }
     }
-    val xgBoostModel = new XGBoostClassificationModelBridge(uid, numClasses,
-      XGBoost.loadModel(dataInStream)).xgbClassificationModel
+    val xgBoostModel = new XGBoostClassificationModelBridge(Identifiable.randomUID("xgbc"),
+      numClasses, XGBoost.loadModel(dataInStream)).xgbClassificationModel
     xgBoostModel.setRawPredictionCol(rawPredictionCol)
     xgBoostModel.setFeaturesCol(featureCol)
     xgBoostModel.setPredictionCol(predictionCol)
-    xgBoostModel.setThresholds(thresholds)
+    if (thresholds != null) {
+      xgBoostModel.setThresholds(thresholds)
+    }
     xgBoostModel
   }
+
+  private def loadTrainingSet(inputFile: String, spark: SparkSession): DataFrame = {
+    val schema = new StructType(Array(
+      StructField("sepal length", DoubleType, true),
+      StructField("sepal width", DoubleType, true),
+      StructField("petal length", DoubleType, true),
+      StructField("petal width", DoubleType, true),
+      StructField("class", StringType, true)))
+    spark.read.schema(schema).csv(inputFile)
+  }
+
 
   def main(args: Array[String]): Unit = {
     val sparkSession = SparkSession.builder().getOrCreate()
     val rootPathOfPipelineModel = args(0)
+    val outputPath = args(1)
+    val trainingSet = loadTrainingSet(args(2), sparkSession)
     val stagesPath = new Path(s"$rootPathOfPipelineModel/stages")
     val fs = stagesPath.getFileSystem(sparkSession.sparkContext.hadoopConfiguration)
     val allStageDirs = fs.listStatus(stagesPath)
@@ -70,10 +88,11 @@ object PipelineLoader {
           DefaultParamReaderBridge.loadParamsInstance[PipelineStage](
             stageDirPath.toString, sparkSession.sparkContext)
         } else if (uid.contains("Classification")) {
-          val dataFile = s"${stageDirPath.toString}/data.json"
+          // val dataFile = s"${stageDirPath.toString}/data.json"
+          val dataFile = s"${stageDirPath.toString}/data"
           loadClassificationModel(dataFile, uid, fs)
         } else if (uid.contains("Regression")) {
-          val dataFile = s"${stageDirPath.toString}/data.json"
+          val dataFile = s"${stageDirPath.toString}/data"
           loadRegressionModel(dataFile, uid, fs)
         } else {
           throw new Exception("Unrecognizable directory")
@@ -83,6 +102,8 @@ object PipelineLoader {
     }
     val pipeline = new Pipeline()
     pipeline.setStages(newStages)
-    pipeline.getStages.foreach(stage => println(stage.uid))
+    val pipelineModel = pipeline.fit(trainingSet)
+    pipelineModel.write.overwrite().save(outputPath)
+    // pipeline.getStages.foreach(stage => println(stage.uid))
   }
 }
