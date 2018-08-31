@@ -39,7 +39,7 @@ object PipelineLoader {
     dataInStream.readUTF()
     val (featureCol, _, predictionCol) = loadGeneralModelParams(dataInStream)
     val rawPredictionCol = dataInStream.readUTF()
-    val numClasses = dataInStream.readInt()
+    // val numClasses = dataInStream.readInt()
     val thresholdLength = dataInStream.readInt()
     var thresholds: Array[Double] = null
     if (thresholdLength != -1) {
@@ -48,8 +48,9 @@ object PipelineLoader {
         thresholds(i) = dataInStream.readDouble()
       }
     }
+    // take care of 0.6 where numClasses is not persisted, hard code as 2
     val xgBoostModel = new XGBoostClassificationModelBridge(Identifiable.randomUID("xgbc"),
-      numClasses, XGBoost.loadModel(dataInStream)).xgbClassificationModel
+      numClasses = 2, XGBoost.loadModel(dataInStream)).xgbClassificationModel
     xgBoostModel.setRawPredictionCol(rawPredictionCol)
     xgBoostModel.setFeaturesCol(featureCol)
     xgBoostModel.setPredictionCol(predictionCol)
@@ -88,11 +89,11 @@ object PipelineLoader {
           DefaultParamReaderBridge.loadParamsInstance[PipelineStage](
             stageDirPath.toString, sparkSession.sparkContext)
         } else if (uid.contains("Classification")) {
-          // val dataFile = s"${stageDirPath.toString}/data.json"
-          val dataFile = s"${stageDirPath.toString}/data"
+          val dataFile = s"${stageDirPath.toString}/data.json"
+          // val dataFile = s"${stageDirPath.toString}/data"
           loadClassificationModel(dataFile, uid, fs)
         } else if (uid.contains("Regression")) {
-          val dataFile = s"${stageDirPath.toString}/data"
+          val dataFile = s"${stageDirPath.toString}/data.json"
           loadRegressionModel(dataFile, uid, fs)
         } else {
           throw new Exception("Unrecognizable directory")
