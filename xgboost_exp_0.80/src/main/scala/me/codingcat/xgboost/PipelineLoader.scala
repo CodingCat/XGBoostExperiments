@@ -72,10 +72,13 @@ object PipelineLoader {
 
 
   def main(args: Array[String]): Unit = {
+    if (args.length != 3) {
+      println("Usage: program rootPathOfOldPipelineModel outputPath pathToTrainingSet")
+      sys.exit(1)
+    }
+    val (rootPathOfPipelineModel, outputPath, trainingSetPath) = (args(0), args(1), args(2))
     val sparkSession = SparkSession.builder().getOrCreate()
-    val rootPathOfPipelineModel = args(0)
-    val outputPath = args(1)
-    val trainingSet = loadTrainingSet(args(2), sparkSession)
+    val trainingSet = loadTrainingSet(trainingSetPath, sparkSession)
     val stagesPath = new Path(s"$rootPathOfPipelineModel/stages")
     val fs = stagesPath.getFileSystem(sparkSession.sparkContext.hadoopConfiguration)
     val allStageDirs = fs.listStatus(stagesPath)
