@@ -2,6 +2,7 @@ package me.codingcat.xgboost
 
 import ml.dmlc.xgboost4j.scala.spark.XGBoostClassifier
 
+import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
@@ -38,14 +39,11 @@ object IrisTrainer {
       "objective" -> "multi:softprob",
       "num_class" -> 3,
       "num_round" -> 100,
-      "num_workers" -> 2,
-      "checkpoint_path" -> "/Users/nanzhu/code/XGBoostExperiments/checkpoints",
-      "checkpoint_interval" -> 2)
+      "num_workers" -> 2)
     val xgbClassifier = new XGBoostClassifier(xgbParam).
       setFeaturesCol("features").
       setLabelCol("classIndex")
     val xgbClassificationModel = xgbClassifier.fit(xgbInput)
-    val results = xgbClassificationModel.transform(xgbInput)
-    results.show()
+    xgbClassificationModel.transform(xgbInput).show()
   }
 }
