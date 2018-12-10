@@ -10,6 +10,7 @@ PROJECT_DIR="$SCRIPT_DIR/../"
 cd $PROJECT_DIR;
 rm -rf xgboost_upstream;
 git clone --recursive git@github.com:CodingCat/xgboost.git xgboost_upstream
+git fetch --all
 git checkout dist_fast_histogram
 cd $PROJECT_DIR/xgboost_upstream/jvm-packages;
 
