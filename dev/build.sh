@@ -20,7 +20,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 # install locally
-mvn install
+mvn install -DskipTests
 
 # build
 cd $PROJECT_DIR;
