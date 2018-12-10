@@ -19,11 +19,8 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     . dev/build-docker.sh
 fi
 
-# mv jars
-
-mkdir -p $PROJECT_DIR/lib;
-cp -v $PROJECT_DIR/xgboost_upstream/jvm-packages/xgboost4j/target/xgboost4j-* $PROJECT_DIR/lib;
-cp -v $PROJECT_DIR/xgboost_upstream/jvm-packages/xgboost4j-spark/target/xgboost4j-* $PROJECT_DIR/lib;
+# install locally
+mvn install
 
 # build
 cd $PROJECT_DIR;
