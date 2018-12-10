@@ -50,7 +50,7 @@ object TitanicTrainer {
     val assembledDF = vectorAssembler.transform(transformedDF.na.drop)
     val Array(train, test) = assembledDF.randomSplit(Array(0.8, 0.2))
     val classifier = new XGBoostClassifier().setFeaturesCol("features").setLabelCol("survived")
-    classifier.setTreeMethod("hist")
+    classifier.setTreeMethod(args(1))
     classifier.setNumWorkers(8)
     classifier.setNumRound(100)
     classifier.setObjective("binary:logistic")
